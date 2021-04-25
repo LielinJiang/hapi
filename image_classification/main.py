@@ -73,6 +73,10 @@ def main():
     net = models.__dict__[FLAGS.arch](pretrained=FLAGS.eval_only and
                                       not FLAGS.resume)
 
+    # normalize = paddle.vision.transforms.Normalize(
+    #         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    # net = paddle.nn.Sequential(normalize, net)
+
     inputs = [Input([None, 3, 224, 224], 'float32', name='image')]
     labels = [Input([None, 1], 'int64', name='label')]
 
@@ -85,13 +89,15 @@ def main():
         os.path.join(FLAGS.data, 'train'),
         mode='train',
         image_size=FLAGS.image_size,
-        resize_short_size=FLAGS.resize_short_size)
+        resize_short_size=FLAGS.resize_short_size,
+        use_gpu=FLAGS.gpu_transform)
 
     val_dataset = ImageNetDataset(
         os.path.join(FLAGS.data, 'val'),
         mode='val',
         image_size=FLAGS.image_size,
-        resize_short_size=FLAGS.resize_short_size)
+        resize_short_size=FLAGS.resize_short_size,
+        use_gpu=FLAGS.gpu_transform)
 
     optim = make_optimizer(
         np.ceil(
@@ -104,6 +110,7 @@ def main():
         paddle.metric.Accuracy(topk=(1, 5)))
 
     if FLAGS.eval_only:
+        print('workers:', FLAGS.num_workers)
         model.evaluate(
             val_dataset,
             batch_size=FLAGS.batch_size,
@@ -160,6 +167,8 @@ if __name__ == '__main__':
         help="checkpoint path to resume")
     parser.add_argument(
         "--eval-only", action='store_true', help="only evaluate the model")
+    parser.add_argument(
+        "--gpu-transform", action='store_true', help="only evaluate the model")
     parser.add_argument(
         "--lr-scheduler",
         default='piecewise',

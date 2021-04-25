@@ -1,0 +1,1 @@
+python main.py --arch resnet18 /workspace/datasets/data/ILSVRC2012/  -n 0 --gpu-transform
